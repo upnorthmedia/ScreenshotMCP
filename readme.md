@@ -2,6 +2,8 @@
 
 A Model Context Protocol MCP server for capturing website screenshots with full page, element, and device size features.
 
+![Screenshot MCP](https://d2mpkaxyc7dort.cloudfront.net/blog/1752604782930-fkaj2h-cleanshot-2025-07-15-at-13-39-20-2x.png)
+
 ## Features
 
 - **Full-page screenshot capture** with automatic scrolling
