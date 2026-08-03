@@ -2,6 +2,19 @@ import puppeteer from 'puppeteer';
 import sharp from 'sharp';
 import { DEVICE_PRESETS, validateUrl, validateViewport, sanitizeSelector, createError } from './utils.js';
 
+// Chromium launch flags for MCP / server environments.
+// Do not add --single-process: it causes Chromium to crash on Windows
+// (Protocol error: Connection closed).
+export const BROWSER_LAUNCH_ARGS = [
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-accelerated-2d-canvas',
+  '--no-first-run',
+  '--no-zygote',
+  '--disable-gpu'
+];
+
 export class ScreenshotCapture {
   constructor(options = {}) {
     this.options = {
@@ -15,19 +28,22 @@ export class ScreenshotCapture {
   }
 
   async initialize() {
+    // Drop a dead browser handle so we can relaunch after a crash/disconnect.
+    // Without this, `this.browser` stays truthy and every later call fails with
+    // "Protocol error: Connection closed".
+    if (this.browser && !this.browser.connected) {
+      try {
+        await this.browser.close();
+      } catch {
+        // Process is already gone; ignore close errors.
+      }
+      this.browser = null;
+    }
+
     if (!this.browser) {
       this.browser = await puppeteer.launch({
         headless: this.options.headless,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--single-process',
-          '--disable-gpu'
-        ]
+        args: BROWSER_LAUNCH_ARGS
       });
     }
     return this.browser;
